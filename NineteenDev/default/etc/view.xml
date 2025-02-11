@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+-->
+<view xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Config/etc/view.xsd">
+    <media>
+        <images module="Magento_Catalog">
+            <image id="wishlist_thumbnail" type="small_image">
+                <width>310</width>
+                <height>310</height>
+            </image>
+            <image id="cart_page_product_thumbnail" type="small_image">
+                <width>110</width>
+                <height>110</height>
+            </image>
+            <image id="category_page_grid" type="small_image">
+                <width>310</width>
+                <height>310</height>
+            </image>
+            <image id="category_page_list" type="small_image">
+                <width>252</width>
+                <height>252</height>
+            </image>
+        </images>
+    </media>
+</view>

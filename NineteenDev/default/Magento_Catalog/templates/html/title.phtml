@@ -1,0 +1,75 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Theme\Block\Html\Title;
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\CurrentCategory;
+use NineteenDev\ProductAttributes\ViewModel\GetCategoryImage;
+
+/** @var Escaper $escaper */
+/** @var Title $block */
+$currentCategoryViewModel = $viewModels->require(CurrentCategory::class);
+
+$categoryImageViewModel = $viewModels->require(GetCategoryImage::class);
+
+$cssClass = $block->getCssClass() ? ' ' . $block->getCssClass() : 'text-3xl';
+$titleHtml = '';
+if (trim((string)$block->getPageHeading())) {
+    $titleHtml = '<span class="base" data-ui-id="page-title-wrapper" '
+        . $block->getAddBaseAttribute()
+        . '>'
+        . $escaper->escapeHtml($block->getPageHeading())
+        . '</span>';
+}
+$currentCategory = $currentCategoryViewModel->fetch();
+
+$bannerImageUrl = $currentCategory->getBannerImage();
+$mobilebannerImageUrl = $currentCategory->getMobileBannerImage();
+$bannerbackground = $currentCategory->getBannerTxtBackground();
+$bannerDesc = $currentCategory->getBannerDesc();
+$defaultBanner = $categoryImageViewModel->getDefaultBanner();
+
+if(empty($bannerImageUrl)) {
+    $bannerImageUrl = $defaultBanner;
+}
+if(empty($mobilebannerImageUrl)) {
+    $mobilebannerImageUrl = $bannerImageUrl;
+}
+?>
+<?php if ($titleHtml): ?>
+<div class="category-banner-section py-[72px]"  data-bg-desktop = "<?= $escaper->escapeUrl($bannerImageUrl) ?>"; data-bg-mobile = "<?= $escaper->escapeUrl($mobilebannerImageUrl) ?>"; >
+    <div class="container">
+        <div class="container-inner md:px-1 xl:px-9">
+            <div class="section-inner py-3 px-3" style="background-color: <?= $bannerbackground ?>">
+                <h1 class="text-white page-title title-font text-[32px] leading-[32px] lg:text-5xl font-bold lg:leading-[48px] w-full mb-3"
+                    <?php if ($block->getId()): ?> id="<?= $escaper->escapeHtmlAttr($block->getId()) ?>" <?php endif; ?>>
+                    <?= /* @noEscape */ $titleHtml ?>
+                </h1>
+                <?= $block->getChildHtml() ?>
+                <div class="category-banner-desc text-white lg:max-w-[671px] leading-[21px] text-sm lg:text-base font-medium">
+                    <?= __($bannerDesc) ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+<script>
+ document.addEventListener("DOMContentLoaded", function (){
+
+  const div = document.querySelector('.category-banner-section');
+    var desktopsrc = div.getAttribute('data-bg-desktop'); // Exctracts URLs from data-bg to an array
+    var mobilesrc = div.getAttribute('data-bg-mobile'); // Exctracts URLs from data-bg to an array
+    var html = document.documentElement; // A reference to <html> element
+  html.style.setProperty('--bg-desktop', 'url('+desktopsrc+')');
+  html.style.setProperty('--bg-mobile', 'url('+mobilesrc+')');  
+} );
+</script>

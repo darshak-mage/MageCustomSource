@@ -1,0 +1,495 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+declare(strict_types=1);
+
+use Magento\Catalog\Block\Product\View;
+use Magento\Customer\Block\Account\Customer;
+use NineteenDev\Accessories\Block\Accessories;
+use Hyva\Theme\ViewModel\ProductPage;
+use NineteenDev\ProductAttributes\ViewModel\ProductViewModel;
+use NineteenDev\LayeredNavigation\ViewModel\Menu;
+use Monsoon\HyvaAjaxAddToCart\Block\AddToCart;
+use Magento\ConfigurableProduct\Block\Product\View\Type\Configurable;
+use Hyva\Theme\ViewModel\ProductListItem;
+
+/** @var View $block */
+/** @var Menu $viewModelMenu */
+/** @var AddToCart $ajaxCartBlock */
+
+
+$childproductViewModel = $viewModels->require(ProductViewModel::class);
+$productViewModel = $viewModels->require(ProductPage::class);
+$viewModelMenu = $viewModels->require(Menu::class);
+$customerBlock = $block->getLayout()->createBlock(Customer::class);
+$accessoriesBlock = $block->getLayout()->createBlock(Accessories::class);
+$ajaxCartBlock = $block->getLayout()->createBlock(AddToCart::class);
+$configurableBlock = $block->getLayout()->createBlock(Configurable::class);
+
+/** @var ProductListItem $productListItemViewModel */
+$productListItemViewModel = $viewModels->require(ProductListItem::class);
+
+$product = $block->getProduct();
+$accessoriesProducts = $accessoriesBlock->getAccessoriesProduct($product);
+$defaultimage = $this->helper('\Magento\Catalog\Helper\Image')->getDefaultPlaceholderUrl('image');
+
+$productAttributeSetId = $product->getAttributeSetId();
+$defaultfilter = $this->helper('\NineteenDev\ProductAttributes\Helper\Data')->getProductDefaultFilter($productAttributeSetId);
+$defaultColumn = $this->helper('\NineteenDev\ProductAttributes\Helper\Data')->getProductDefaultcolumn($productAttributeSetId);
+
+$heroicons = $viewModels->require(\Hyva\Theme\ViewModel\HeroiconsOutline::class);
+
+$attributes = []; 
+$attributecode = [];
+$attributeOptions = [];
+$productColumns = $product->getProductColumns();
+$productFilters = $product->getProductfilters();
+
+if ($productColumns == "") { $productColumns = $defaultColumn; }
+if ($productFilters == "") { $productFilters = $defaultfilter; }
+
+$filerarr = [];
+$columnarr = [];
+ 
+if ($productFilters !="") { $filerarr =  explode(',',$productFilters); }
+if ($productColumns !="") { $columnarr =  explode(',',$productColumns); }
+
+$odd = [];
+$even = [];
+
+if (count($columnarr) > 0) {
+    $odd = array_filter($columnarr, function ($input) {
+        return $input & 1;},
+        ARRAY_FILTER_USE_KEY);
+    $even = array_filter($columnarr, function ($input) {
+        return !($input & 1);},
+        ARRAY_FILTER_USE_KEY);
+}
+?>
+
+<?php if (!empty($accessoriesProducts) && $accessoriesProducts->count()): ?>
+      <div class="containermain md:mb-10 mb-8">
+          <h2 class="text-ALED-Black text-2xl font-medium leading-8 title-font md:text-left w-full"><?=__('Accessories') ?></h2>
+          <div class ="itemmain" style="">
+          <div class="itemheader no-display-tablet" style="">
+                <div class="item-image-header">&nbsp;</div>
+                <div class="item-header-container" style="">
+                <div class="item-header sku"><span><?=__('Sku')?></span></div>
+                
+                <?php foreach ($attributes as $attribute): ?>
+                    <div class="item-header"><span><?= $escaper->escapeHtml($attribute->getProductAttribute()->getStoreLabel()); ?></span>
+                    <?php $attributecode[$attribute->getProductAttribute()->getId()] = $attribute->getProductAttribute()->getAttributeCode(); ?>
+                       <?php
+                        foreach ($attribute->getProductAttribute()->getOptions() as $d) {
+                                $attributeOptions[$d['value']] = $d['label'];
+                        }
+                        ?>
+                    </div>
+                <?php endforeach; ?>
+
+                <div class="item-header no-display <?= ($customerBlock->customerLoggedIn()) ? 'lg:min-w-[240px]' : 'lg:min-w-[195px]' ?>">
+                    <span><?=$escaper->escapeHtml(__('Price'))?></span>
+                    <span class="subname hidden">&nbsp;<?= $escaper->escapeHtml(__('Net price excl. VAT')) ?></span>
+                </div>
+                
+            </div>
+        </div>
+    
+    <?php
+    foreach ($accessoriesProducts as $child):
+        $datafiler = [];
+        $childObj = $childproductViewModel->getProduct($child->getId());
+
+        if ($childObj->getStatus() == 2) {
+            continue;
+        }
+
+        foreach ($filerarr as $filter):
+            $filterval = $childObj->getData($filter);
+            if ($filterval) {
+                $datafiler [] = trim($filterval);
+            }
+        endforeach;
+        $filtersstring = implode(',', $datafiler);
+    ?>
+    
+    <div class="itemcontainer accessories relative" id="itemcontainer<?= $escaper->escapeHtml($child->getId()) ?>"  data-id="itemcontainer<?= $escaper->escapeHtml($child->getId()) ?>" data-selected="<?= $escaper->escapeHtml($filtersstring) ?>" data-sku="<?= $escaper->escapeHtml($child->getSku()) ?>">
+        <?php 
+        $fullImageUrl = "";
+        if ($child->getThumbnail() !="no_selection" && $child->getThumbnail() !="") {
+            $fullImageUrl = $childproductViewModel->getProductThumbnailImageUrl($child);
+        } else {
+            $fullImageUrl = $defaultimage;
+        }
+        $productParentUrl = $this->helper('\NineteenDev\ProductAttributes\Helper\Data')->getParentProductUrl($child->getId());
+        $productUrl = $productParentUrl ? $productParentUrl : $child->getProductUrl();
+        ?>
+
+
+        <form class="" id="product_addtocart_form<?= (int)$child->getId() ?>" method="post" action="<?= $escaper->escapeUrl($productViewModel->getAddToCartUrl($child)) ?>">
+        <?= /** @noEscape */ $block->getBlockHtml('formkey') ?>
+        <input type="hidden" name="product" value="<?= (int)$child->getId() ?>"/>
+        <input type="hidden" class="child qty-input accessories item-qty<?= (int)$child->getId() ?>" name="qty" value="1"/>
+        <a class="item-product-link-icon no-display-tablet absolute top-[15px] left-[30px]" href="<?= $escaper->escapeUrl($productUrl);?>" title="<?= $child->getName() ?>" alt="<?= $child->getName() ?>">
+            <?= $heroicons->InformationCircleHtml('pointer-events-none', 24, 24); ?>
+        </a>
+        <div class ="no-display-tablet item-image tst"><img src=<?= $escaper->escapeUrl($fullImageUrl)?> /></div>
+            <div class="item-content-container">
+                <!-- collecting product attribute options -->
+                <?php
+                if ($product->getTypeId() ==  Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+                    $attributes = $configurableBlock->decorateArray($configurableBlock->getAllowAttributes());
+                }
+                $productAttr = []; 
+                ?>
+
+                <?php foreach ($attributes as $attribute): ?>
+                    <?php
+                    // Get attribute code and options
+                    $attributeCode = $attribute->getProductAttribute()->getAttributeCode();
+                    $options = $attribute->getProductAttribute()->getOptions();
+
+                    foreach ($options as $option) {
+                        $attributeOptions[$option['value']] = $option['label'];
+                    }
+
+                    // Push the corresponding product attribute value to $productAttr
+                    if (!empty($attributeOptions[$child->getData($attributeCode)]) && $attributeOptions[$child->getData($attributeCode)] !== '') {
+                        if ($attributeOptions[$child->getData($attributeCode)] !== 0) {
+                            $productAttr[] = str_replace(',', ' ', $attributeOptions[$child->getData($attributeCode)]);
+                        }
+                    }
+                    ?>
+                <?php endforeach; ?>
+
+
+                <div class="display-tablet item-image-sku">
+                    <div class="item-content sku" >
+                        <a class="item-product-link-icon inline-block" href="<?= $escaper->escapeUrl($productUrl);?>" title="<?= $child->getName() ?>" alt="<?= $child->getName() ?>">
+                            <?= $heroicons->InformationCircleHtml('pointer-events-none', 24, 24); ?>
+                        </a>
+                        <label><?= $escaper->escapeHtml(__('Sku')) ?></label>
+                        <span><?= $escaper->escapeHtml($child->getSku()) ?></span>
+                    </div>
+                    <div class ="item-image"><img src=<?= $escaper->escapeUrl($fullImageUrl)?> /></div>
+                </div>
+               
+                <div class ="no-display-tablet item-content sku" >
+                   <?php
+                        $productAttr = array_filter($productAttr, fn($value) => trim($value) !== '');
+                        $optionsText = !empty($child->getData('spare_parts_accessories_option_text'))
+                            ? $child->getData('spare_parts_accessories_option_text') : implode(', ', $productAttr);
+
+                    ?>
+                    <label><?=__('Sku')?></label>
+                    <span class="!justify-end"><?= $escaper->escapeHtml($child->getSku()) ?></span>
+                    <span class="!justify-start"><?= $escaper->escapeHtml($optionsText) ?></span>
+                    <span class="itemaddedtext sku-<?=$escaper->escapeHtml(preg_replace('/\s+/', '-', $child->getSku())) ?>"></span>
+                </div>
+                
+                <div class ="item-content desktop no-display">
+                    <span><?= /* @noEscape */ $productListItemViewModel->getProductPriceHtml($childObj) ?></span>
+                    <?php if ($customerBlock->customerLoggedIn()) { ?>
+                        <span><?= $escaper->escapeHtml(__('Net price excl. VAT')) ?></span>
+                    <?php } else { ?>
+                        <span><?= $escaper->escapeHtml(__('List price excl. VAT')) ?></span>
+                    <?php }?>
+                </div>
+
+                <div class="item-content-cart desktop no-display">
+                    <div class ="item-content">
+                        <span class="price-cont" ><?= /* @noEscape */ $productListItemViewModel->getProductPriceHtml($childObj) ?>
+                        <span class="customstatus" id="customstatus<?= $escaper->escapeHtml($product->getId());?>" ></span></span>
+                    <?php if ($customerBlock->customerLoggedIn()) { ?>
+                        <span><?= $escaper->escapeHtml(__('Net price excl. VAT')) ?></span>
+                    <?php } else { ?>
+                        <span><?= $escaper->escapeHtml(__('List price excl. VAT')) ?></span>
+                    <?php }?>
+                </div>
+
+                <div class="item-content-cart">
+                    <?php if ($customerBlock->customerLoggedIn()): ?>
+                    <div class ="item-qty accessories item-qty<?= $escaper->escapeHtml($child->getId());?>" id="item-qty<?= $escaper->escapeHtml($child->getId());?>"><?= $this->getLayout()->createBlock("Magento\Catalog\Block\Product\View")->setTemplate("Magento_Catalog::product/view/configquantity.phtml")->toHtml(); ?></div> <?php endif; ?>
+                    <div class ="item-cart">
+                    
+                    <?php if ($customerBlock->customerLoggedIn()): ?>
+                        <?php if ($child->getTypeId() != 'configurable'): ?>
+                            <button type="button"
+                                    form="product_addtocart_form"
+                                    title="<?= $escaper->escapeHtmlAttr(__('Add to Cart')) ?>"
+                                    data-item-id="<?= $escaper->escapeHtml($child->getId());?>"
+                                    class="btn btn-primary px-6 py-[15px] bg-ALED-Green child product-addtocart-button product-addtocart-button min-w-[140px]"
+                                    id="product-addtocart-button<?= $escaper->escapeHtml($child->getId()); ?>"
+                            >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <g id="ion:cart-outline">
+                                        <path id="Vector" d="M8.25 20.25C8.66421 20.25 9 19.9142 9 19.5C9 19.0858 8.66421 18.75 8.25 18.75C7.83579 18.75 7.5 19.0858 7.5 19.5C7.5 19.9142 7.83579 20.25 8.25 20.25Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path id="Vector_2" d="M18.75 20.25C19.1642 20.25 19.5 19.9142 19.5 19.5C19.5 19.0858 19.1642 18.75 18.75 18.75C18.3358 18.75 18 19.0858 18 19.5C18 19.9142 18.3358 20.25 18.75 20.25Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path id="Vector_3" d="M2.25 3.75H5.25L7.5 16.5H19.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path id="Vector_4" d="M7.5 13.5H19.1925C19.2792 13.5001 19.3633 13.4701 19.4304 13.4151C19.4975 13.3601 19.5434 13.2836 19.5605 13.1986L20.9105 6.44859C20.9214 6.39417 20.92 6.338 20.9066 6.28414C20.8931 6.23029 20.8679 6.18009 20.8327 6.13717C20.7975 6.09426 20.7532 6.05969 20.703 6.03597C20.6528 6.01225 20.598 5.99996 20.5425 6H6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </g>
+                                </svg>
+                                <svg class="added" xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+                                    <path d="M8.25 20.75C8.66421 20.75 9 20.4142 9 20C9 19.5858 8.66421 19.25 8.25 19.25C7.83579 19.25 7.5 19.5858 7.5 20C7.5 20.4142 7.83579 20.75 8.25 20.75Z" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M18.75 20.75C19.1642 20.75 19.5 20.4142 19.5 20C19.5 19.5858 19.1642 19.25 18.75 19.25C18.3358 19.25 18 19.5858 18 20C18 20.4142 18.3358 20.75 18.75 20.75Z" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M2.25 4.25H5.25L7.5 17H19.5" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M7.5 14H19.1925C19.2792 14.0001 19.3633 13.9701 19.4304 13.9151C19.4975 13.8601 19.5434 13.7836 19.5605 13.6986L20.9105 6.94859C20.9214 6.89417 20.92 6.838 20.9066 6.78414C20.8931 6.73029 20.8679 6.68009 20.8327 6.63717C20.7975 6.59426 20.7532 6.55969 20.703 6.53597C20.6528 6.51225 20.598 6.49996 20.5425 6.5H6" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span id="buttontext<?= $escaper->escapeHtml($child->getSku())  ?>" class="button-text<?= $escaper->escapeHtml(preg_replace('/\s+/', '-', $child->getSku()))?> text-center text-white text-base font-semibold leading-normal sm:block md:hidden lg:block">
+                                    <?= $block->getData('is_cart_configure') ?
+                                        $escaper->escapeHtml(__('Update item')) :
+                                        $escaper->escapeHtml(__('Add to Cart')) ?>
+                                </span>
+                            </button>
+                            
+                            <?php else: ?>
+                                <a class="min-w-[140px] ml-0 underline font-medium text-ALED-Black flex justify-center items-center gap-[10px]"  href="<?= $escaper->escapeUrl($child->getProductUrl()) ?>">
+                                    <?=__('View Product');?>
+                                </a>
+                            <?php endif; ?>
+                <?php else: ?>
+                    <a class="ml-0 underline font-medium text-ALED-Black flex justify-end items-center gap-[10px]" href="<?= /* @noEscape */ $viewModelMenu->getPostParams() ?>">
+                        <?= $escaper->escapeHtml(__('Login to add to basket »')) ?>
+                    </a>
+                <?php endif; ?>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tablet  no-display">
+                    <div class ="item-content">
+                        <span><?= /* @noEscape */ $productListItemViewModel->getProductPriceHtml($childObj) ?></span>
+                        <?php if ($customerBlock->customerLoggedIn()) { ?>
+                            <span><?= $escaper->escapeHtml(__('Net price excl. VAT')) ?></span>
+                        <?php } else { ?>
+                            <span><?= $escaper->escapeHtml(__('List price excl. VAT')) ?></span>
+                        <?php }?>
+                    </div>
+
+                    <div class="item-content-cart">
+                        <?php if ($customerBlock->customerLoggedIn()): ?>
+                            <div class ="item-qty accessories item-qty<?= $escaper->escapeHtml($child->getId()); ?>" id="item-qty<?=$escaper->escapeHtml($child->getId()); ?>">
+                                <?= $this->getLayout()->createBlock("Magento\Catalog\Block\Product\View")->setTemplate("Magento_Catalog::product/view/configquantity.phtml")->toHtml(); ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class ="item-cart">
+                        
+                        <?php if ($customerBlock->customerLoggedIn()): ?>
+                            <?php if($child->getTypeId()!='configurable'): ?>
+                            <button type="button"
+                                    form="product_addtocart_form"
+                                    title="<?= $escaper->escapeHtmlAttr(__('Add to Cart')) ?>"
+                                    data-item-id="<?= $escaper->escapeHtml($child->getId());?>"
+                                    class="btn btn-primary px-6 py-[15px] bg-ALED-Green child product-addtocart-button product-addtocart-button min-w-[114px]"
+                                    id="product-addtocart-button<?= $escaper->escapeHtml($child->getId()) ;?>"
+                            >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <g id="ion:cart-outline">
+                                        <path id="Vector" d="M8.25 20.25C8.66421 20.25 9 19.9142 9 19.5C9 19.0858 8.66421 18.75 8.25 18.75C7.83579 18.75 7.5 19.0858 7.5 19.5C7.5 19.9142 7.83579 20.25 8.25 20.25Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path id="Vector_2" d="M18.75 20.25C19.1642 20.25 19.5 19.9142 19.5 19.5C19.5 19.0858 19.1642 18.75 18.75 18.75C18.3358 18.75 18 19.0858 18 19.5C18 19.9142 18.3358 20.25 18.75 20.25Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path id="Vector_3" d="M2.25 3.75H5.25L7.5 16.5H19.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path id="Vector_4" d="M7.5 13.5H19.1925C19.2792 13.5001 19.3633 13.4701 19.4304 13.4151C19.4975 13.3601 19.5434 13.2836 19.5605 13.1986L20.9105 6.44859C20.9214 6.39417 20.92 6.338 20.9066 6.28414C20.8931 6.23029 20.8679 6.18009 20.8327 6.13717C20.7975 6.09426 20.7532 6.05969 20.703 6.03597C20.6528 6.01225 20.598 5.99996 20.5425 6H6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </g>
+                                </svg>
+                                <svg class="added" xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+                                        <path d="M8.25 20.75C8.66421 20.75 9 20.4142 9 20C9 19.5858 8.66421 19.25 8.25 19.25C7.83579 19.25 7.5 19.5858 7.5 20C7.5 20.4142 7.83579 20.75 8.25 20.75Z" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M18.75 20.75C19.1642 20.75 19.5 20.4142 19.5 20C19.5 19.5858 19.1642 19.25 18.75 19.25C18.3358 19.25 18 19.5858 18 20C18 20.4142 18.3358 20.75 18.75 20.75Z" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M2.25 4.25H5.25L7.5 17H19.5" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M7.5 14H19.1925C19.2792 14.0001 19.3633 13.9701 19.4304 13.9151C19.4975 13.8601 19.5434 13.7836 19.5605 13.6986L20.9105 6.94859C20.9214 6.89417 20.92 6.838 20.9066 6.78414C20.8931 6.73029 20.8679 6.68009 20.8327 6.63717C20.7975 6.59426 20.7532 6.55969 20.703 6.53597C20.6528 6.51225 20.598 6.49996 20.5425 6.5H6" stroke="#6CB741" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <svg class="added" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M19.125 11.625H4.125M11.625 4.125V19.125" stroke="#6CB741" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                
+                                <span id="buttontext<?= $escaper->escapeHtml($child->getSku()) ?>" class="button-text<?= $escaper->escapeHtml(preg_replace('/\s+/', '-', $child->getSku()))?> text-center text-white text-base font-semibold leading-normal sm:block md:hidden lg:block">
+                                    <?= $block->getData('is_cart_configure') ?
+                                        $escaper->escapeHtml(__('Update item')) :
+                                        $escaper->escapeHtml(__('Add to Cart')) ?>
+                                </span>
+                            </button>
+                            <?php else: ?>
+                                <a class="ml-0 underline font-medium text-ALED-Black flex justify-center items-center gap-[10px]"  href="<?= $escaper->escapeUrl($child->getProductUrl()) ?>">
+                                    <?=__('View Product');?>
+                                </a>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <a class="ml-0 underline font-medium text-ALED-Black flex justify-end items-center gap-[10px]" href="<?= /* @noEscape */ $viewModelMenu->getPostParams() ?>">
+                                <?= $escaper->escapeHtml(__('Login to add to basket »')) ?>
+                            </a>
+                        <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="itemaddedtext sku-<?=$escaper->escapeHtml(preg_replace('/\s+/', '-', $child->getSku())) ?>"></div>
+                </div>
+            </div>
+        </form>
+        </div>
+    <?php endforeach ?>
+    </div>
+    </div>
+ <?php endif; ?>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var allAddtoCart = document.querySelectorAll(".child.product-addtocart-button");
+    for (let i = 0; i < allAddtoCart.length; i++) {
+        allAddtoCart[i].addEventListener('click', async(event)  => {
+            event.preventDefault();
+            var addcartID = allAddtoCart[i].id;
+            var attrClass = addcartID.replace('product-addtocart-button','selectattr');
+            var cartqtyid = addcartID.replace('product-addtocart-button','item-qty');
+            var productid = addcartID.replace('product-addtocart-button','');
+            var qtyInput = document.querySelector(".accessories." + cartqtyid + " input");
+
+            qtyInput.addEventListener('change', function() {
+                if (qtyInput.value > 0) {
+                    allAddtoCart[i].removeAttribute('disabled');
+                } else {
+                    allAddtoCart[i].setAttribute('disabled', 'true');
+                }
+            });
+
+            if (qtyInput.value <= 0) {
+                // Disable the button if the quantity is negative or zero
+                allAddtoCart[i].setAttribute('disabled', 'true');
+                return;
+            }
+            
+            document.querySelector(".accessories.child.qty-input."+cartqtyid).value = document.querySelector(".accessories."+cartqtyid+" input").value;
+            //document.getElementById('product_addtocart_form'+productid).submit();
+            var form = document.getElementById('product_addtocart_form'+productid);
+            const delay = 100;
+            const formData = new URLSearchParams(new FormData(form));
+            const button = form.querySelector('button') ?
+            form.querySelector('button') :
+            document.getElementById('product-addtocart-button<?=$escaper->escapeHtml($product->getId()) ?>');
+            const loader = document.createElement('div');
+
+            loader.className = 'absolute inset-0 flex justify-center items-center loader';
+            loader.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" xml:space="preserve" width="32" height="32">
+                    <path fill="#fff"
+                        d="M73 50c0-12.7-10.3-23-23-23S27 37.3 27 50m3.9 0c0-10.5 8.5-19.1 19.1-19.1S69.1 39.5 69.1 50">
+                        <animateTransform attributeName="transform" attributeType="XML" type="rotate" dur="1s"
+                            from="0 50 50" to="360 50 50"
+                            repeatCount="indefinite"/>
+                    </path>
+                </svg> `;
+
+            button.prepend(loader);
+            button.classList.add('relative', 'is-loading');
+            button.disabled = true;
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+               
+                if (!response.ok) {
+                    return document.getElementById('product_addtocart_form'+productid).submit();
+                }
+
+                if (response.redirected) {
+                    return  window.location.href = response.url;
+                }
+
+                const data = await response.json();
+
+                if (data.backUrl) {
+                    return window.location.href = data.backUrl;
+                }
+
+                <?php if ($ajaxCartBlock->isCartOpenAfterAddToCart()): ?>
+                    window.dispatchEvent(new CustomEvent('toggle-cart', {
+                        detail: {
+                            isOpen: true
+                        }
+                    }));
+
+                    setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('toggle-cart', {
+                            detail: {
+                                isOpen: false
+                            }
+                        }));
+
+                        window.dispatchEvent(new Event('clear-messages'))
+                    }, 5000);
+                <?php endif; ?>
+                
+                fetch(
+                    window.BASE_URL + 'productattributes/index/index/',
+                    {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }
+                )
+                .then(response => response.json())
+                .then(result => addedProduct(result));
+                
+                return window.dispatchEvent(new CustomEvent('reload-customer-section-data'));
+            } catch (err) {
+                window.dispatchEvent(new CustomEvent('product-addtocart-error'));
+
+                setMessage({
+                    text:'<?= $escaper->escapeJs(__('There was a problem adding your item to the cart.')) ?>',
+                    type: 'error'
+                });
+            } finally {
+                try {
+                    var messages = hyva.getCookie('mage-messages');
+                    messages = messages ? JSON.parse(decodeURIComponent(messages).replace(/\+/g, ' ')) : [];
+                    document.cookie = 'mage-messages=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
+                } catch (error) {
+                    console.warn('Error parsing Cookie Messages:', error);
+                    return;
+                }
+
+                setTimeout(() => {
+                    loader.remove();
+                    button.classList.remove('is-loading');
+                    button.disabled = false;
+                }, delay);
+            }
+        });
+    }
+    
+    function addedProduct(itemaddedtocart){
+        var catitems = itemaddedtocart.productitems;
+        var itemadded = itemaddedtocart.addedtocart;
+        var allitemcontainer = document.querySelectorAll(".itemcontainer");
+
+        for (let j = 0; j < allitemcontainer.length; j++) {
+            var productvalue = allitemcontainer[j].dataset.sku;
+            var skuClass = productvalue.replace(/\s+/g, '-'); 
+
+            if(catitems.includes(productvalue)) {
+                const statusText = document.querySelectorAll('.sku-'+skuClass);
+                statusText.forEach(el => {
+                    el.innerHTML = '<?=$escaper->escapeHtml(__('Added to Cart'))?>'; 
+                    el.classList.add('itemadded');
+                });
+
+                const buttonText = document.querySelectorAll('.button-text'+skuClass);
+                buttonText.forEach(el => {
+                    el.innerHTML = '<?=$escaper->escapeHtml(__('Add more'))?>';
+                    el.closest('button').classList.add('itemadded');
+                });
+            }
+        }
+    }
+    
+});
+</script>

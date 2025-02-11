@@ -1,0 +1,77 @@
+<?php
+
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\CurrentCategory;
+use NineteenDev\ProductAttributes\ViewModel\GetCategoryImage;
+use Magento\Catalog\Block\Product\ListProduct;
+use Magento\Framework\Escaper;
+
+/** @var ListProduct $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+/** @var ProductPage $productViewModel */
+/** @var CurrentCategory $currentCategoryViewModel */
+
+$currentCategoryViewModel = $viewModels->require(CurrentCategory::class);
+$getCategoryImageViewModel = $viewModels->require(GetCategoryImage::class);
+
+$eagerLoadImagesCount = (int) ($block->getData('eager_load_images_count') ?? 3);
+
+$currentCategory = $currentCategoryViewModel->fetch();
+$currentCategoryLevel = $currentCategory->getLevel(); 
+$subcategories = $currentCategory->getChildrenCategories()->addAttributeToFilter('parent_id',  $currentCategory->getId());
+?>
+<?php if ($subcategories && $subcategories->count() > 0) { ?>
+
+<section class="py-8 xs:py-0" id="product-list" aria-label="<?= $escaper->escapeHtmlAttr(__('Product list')) ?>" tabindex="-1">
+    <div class="products wrapper mode-grid products-grid">
+        <div class="mx-auto pb-6 md:pb-8 lg:pb-12 grid gap-4 lg:gap-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-4">
+            <?php
+            $viewIsGrid = 'grid';
+            foreach ($subcategories as $subcategory) { 
+                $subcategory = $getCategoryImageViewModel->getData($subcategory->getId());
+                $imageHelper = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Catalog\Helper\Image::class);
+                $imageUrl = $subcategory->getImageUrl() ?: $imageHelper->getDefaultPlaceholderUrl('image');
+            ?>
+                <form method="post"
+                    class="item product category-list product-item product_addtocart_form card icon-hover flex flex-col w-full overflow-hidden cursor-pointer
+                    <?= $viewIsGrid ? '' : 'md:flex-row' ?>"  onclick="location.href='<?= $escaper->escapeUrl($subcategory->getUrl()) ?>';"
+                >
+                <link rel="prefetch" href="<?= $escaper->escapeUrl($subcategory->getUrl()) ?>" />
+                <a href="<?= $escaper->escapeUrl($subcategory->getUrl()) ?>"
+                    class="product photo product-item-photo block mx-auto bg-white flex h-full items-center min-h-[215px] sm:min-h-[228px] md:min-h-[270px] lg:min-h-[255px] xl:min-h-[215px] 2xl:min-h-[228px]  <?= $viewIsGrid ? '' : 'md:w-2/6 md:mb-0 md:mr-5' ?>"
+                    tabindex="-1"
+                    >
+                    <img
+                        class="product-image-photo max-h-[228px]"
+                        src="<?= $escaper->escapeUrl($imageUrl) ?>"
+                        alt="<?= $escaper->escapeHtmlAttr($subcategory->getName()) ?>"
+                        width="228"
+                        height="228"
+                        />
+                </a>
+
+                <div class="product-info flex flex-col grow justify-end xs:mt-3">
+                    <div class="items-center justify-center font-medium text-lg text-center 
+                    xs:text-sm xs:leading-[21px] md:text-base md:leading-6
+                    <?= $viewIsGrid ? '' : 'md:text-left' ?>">
+                        <a
+                            class="product-item-link break-words hyphens-auto"
+                            href="<?= $escaper->escapeUrl($subcategory->getUrl()) ?>"
+                            :id="`slide-desc-<?= $escaper->escapeHtmlAttr($subcategory->getId()) ?>-${$id('slider-id')}`"
+                        >
+                            <?= /* @noEscape */ $subcategory->getName() ?>
+                        </a>
+                    </div>
+        
+                </div>
+        
+                </form>
+
+            <?php } ?>
+        </div>
+    </div>
+</section>
+<hr class="border-t-2 border-gray-200 pt-6 md:pt-8 lg:pt-12" />
+<?php } ?>

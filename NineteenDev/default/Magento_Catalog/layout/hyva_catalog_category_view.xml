@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      layout="2columns-left"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+    
+        <referenceBlock name="page.main.title">
+            <action method="setTemplate">
+                <argument name="template" xsi:type="string">Magento_Catalog::html/title.phtml</argument>
+            </action>
+        </referenceBlock>
+
+        <referenceBlock name="product_list_toolbar" display="true"/>
+
+        <referenceBlock name="view.addto.wishlist" remove="true"/>
+        <referenceBlock name="category.image" remove="true"/>
+
+        <referenceContainer name="amshopby.catalog.topnav.container" remove="true"/>
+        <move element="page.main.title" destination="page.top" before="-" />
+        <move element="category.view.container" destination="content" after="category.products"/>
+        
+        <block class="Magento\LayeredNavigation\Block\Navigation\Category" name="catalog.leftnavnew" before="-" template="Magento_LayeredNavigation::layer/viewfilter.phtml">
+                <block class="Magento\LayeredNavigation\Block\Navigation\State" name="catalog.navigation.state" as="state" />
+                <block class="Magento\LayeredNavigation\Block\Navigation\FilterRenderer" name="catalog.navigation.renderer" as="renderer" template="Magento_LayeredNavigation::layer/filter.phtml">
+                    <arguments>
+                        <argument name="product_layer_view_model" xsi:type="object">Magento\LayeredNavigation\ViewModel\Layer\Filter</argument>
+                    </arguments>
+                </block>
+            </block>
+         <block class="Magento\Framework\View\Element\Template" name="subcategory.list" template="Magento_Catalog::product/category.phtml"/>
+   
+        <move element="catalog.leftnavnew" destination="content" after="product_list_toolbar" />
+        <move element="product_list_toolbar" destination="content" before="category.products" />
+        <move element="subcategory.list" destination="content" before="product_list_toolbar" />
+
+        <referenceContainer name="main.content">
+            <block class="Magento\Theme\Block\Html\Title" name="mobile.page.title" template="Magento_Catalog::html/mobile-title.phtml" />
+        </referenceContainer>
+        <move element="mobile.page.title" destination="content" before="category.view.container" />
+        <referenceContainer name="sidebar.main">
+            <block class="Magento\LayeredNavigation\Block\Navigation\Search" name="catalogsearch.leftnav" before="-" template="Magento_LayeredNavigation::layer/view.phtml">
+                <block class="Magento\LayeredNavigation\Block\Navigation\State" name="catalogsearch.navigation.state" as="state" />
+                <block class="Magento\LayeredNavigation\Block\Navigation\FilterRenderer" name="catalogsearch.navigation.renderer" as="renderer" template="Magento_LayeredNavigation::layer/filter.phtml">
+                    <arguments>
+                        <argument name="product_layer_view_model" xsi:type="object">Magento\LayeredNavigation\ViewModel\Layer\Filter</argument>
+                    </arguments>
+                </block>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

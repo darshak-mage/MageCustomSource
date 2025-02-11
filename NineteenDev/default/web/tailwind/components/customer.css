@@ -1,0 +1,114 @@
+#customer-login-container {
+    @apply flex flex-col justify-between py-6;
+
+    @screen md {
+        @apply flex-row;
+    }
+}
+
+#customer-login-container .fieldset.login .control,
+.registration-container .form-create-account .control,
+#user_forgotpassword  .control,
+.reset-forgotpassword .control {
+    max-width: 497px;
+}
+
+#customer-login-container .actions-toolbar,
+.registration-container .actions-toolbar,
+#user_forgotpassword .actions-toolbar,
+.reset-forgotpassword .actions-toolbar {
+    @apply border-gray-200;
+}
+
+.registration-container .form-create-account .form-combination {
+    flex-direction: column;
+    gap: 0;
+}
+
+.registration-container .form-create-account .form-combination .field {
+    @apply w-full mb-4 mt-0;
+    
+    @screen md {
+        @apply w-full;
+    }
+}
+
+.registration-container .form-create-account .form-combination .field input {
+    @apply px-2.5 py-[9px] bg-neutral-50 rounded-md border border-slate-300;
+}
+
+.registration-container .form-create-account .field {
+    @apply mb-4 mt-0;
+}
+
+.registration-container .form-create-account fieldset label {
+    @apply text-ALED-Black text-sm font-medium leading-[21px];
+}
+
+body .btn-primary:hover {
+    background: #333 !important;
+}
+
+.customer-wishlist {
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        opacity: 1;
+    }
+}
+
+body {
+    input[type="checkbox"] {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border-color: #CBD5E0;
+        background-color: #FAFAFA;
+
+        &:focus {
+            box-shadow: none;
+        }
+
+        &:checked {
+            background-color: #6CB741;
+
+            &:focus,
+            &:hover {
+                background-color: #6CB741;    
+            }
+        }
+    }
+
+    form .field.field-error .messages {
+        font-weight: 500;
+    }
+}
+
+.order-products-toolbar {
+    .toolbar-number,
+    .pages-items a,
+    label[for="limiter"] {
+        font-size: 16px;
+        line-height: 24px;
+    }
+
+    .pages-items a[aria-current="page"] {
+        border-color: #6CB741;
+        background: #6CB741;
+        color: #fff;    
+    }
+}
+
+body.sales-order-view {
+    .order-details-items {
+        .order-links {
+            background: transparent;
+        }
+    }
+}
+
+div#password-strength-meter-container {
+    width: 100%;
+    margin: 5px 0;
+    font-size: 14px;
+}

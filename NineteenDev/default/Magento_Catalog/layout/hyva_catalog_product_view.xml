@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+ -->
+<page layout="1column" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="catalog_product_opengraph"/>
+    <update handle="hyva_product_slider" />
+    <body>
+        <attribute name="itemtype" value=""/>
+        <attribute name="itemscope" value=""/>
+        <referenceBlock name="page.main.title">
+            <arguments>
+                <argument name="css_class" xsi:type="string">product text-3xl font-bold p-0 m-0 mb-4 uppercase</argument>
+                <argument name="add_base_attribute" xsi:type="string">itemprop="name"</argument>
+            </arguments>
+        </referenceBlock>
+        <referenceBlock name="product.detail.page">
+            <!--  <block class="Magento\Catalog\Block\Product\View"
+                    name="product.static.section"
+                    template="Magento_Catalog::product/view/sections/product-static-section.phtml" /> -->
+        
+         <block name="spareparts" class="Magento\Catalog\Block\Product\View"
+               template="Magento_Catalog::product/product-spareparts.phtml">
+            <arguments>
+                <argument name="type" xsi:type="string">spare_parts</argument>
+                <argument name="title" xsi:type="string" translate="true">Spare Parts</argument>
+                <argument name="heading_tag" xsi:type="string">h2</argument>
+            </arguments>
+        </block>
+        <block name="accessories" class="Magento\Catalog\Block\Product\View"
+               template="Magento_Catalog::product/product-accessories.phtml">
+            <arguments>
+                <argument name="type" xsi:type="string">accessories</argument>
+                <argument name="title" xsi:type="string" translate="true">accessories</argument>
+                <argument name="heading_tag" xsi:type="string">h2</argument>
+            </arguments>
+        </block>
+        <block class="Magento\Catalog\Block\Product\View"
+                           name="product.info.simpleproduct"
+                           template="Magento_Catalog::product/view/product-simpleproduct.phtml">
+        </block>
+        </referenceBlock>
+        <referenceBlock name="product.info.details">
+            <block class="Magento\Catalog\Block\Product\View"  name="specification"
+                   template="Magento_Catalog::product/view/sections/specification.phtml"
+                   group="detailed_info">
+                <arguments>
+                    <argument translate="true" name="title" xsi:type="string">Specifications</argument>
+                    <argument name="sort_order" xsi:type="number">10</argument>
+                </arguments>
+            </block>
+            <block class="Magento\Catalog\Block\Product\View"  name="description"
+                   template="Magento_Catalog::product/view/sections/description.phtml"
+                   group="detailed_info">
+                <arguments>
+                    <argument translate="true" name="title" xsi:type="string">Description</argument>
+                    <argument name="sort_order" xsi:type="number">20</argument>
+                </arguments>
+            </block> 
+            <block class="Magecomp\Productattachment\Block\Product\Downloads" name="downloads.tab" as="downloads"
+                   template="Magecomp_Productattachment::downloads.phtml" group="detailed_info" ifconfig="magecomp_productattachment/general/status">
+                   <arguments>
+                    <argument translate="true" name="title" xsi:type="string">Downloads</argument>
+                    <argument name="sort_order" xsi:type="number">30</argument>
+                </arguments>
+            </block>
+                        
+            <block class="Magento\Catalog\Block\Product\View" name="illustrations" 
+                    template="Magento_Catalog::product/view/sections/illustrations.phtml" group="detailed_info" >
+                <arguments>
+                    <argument translate="true" name="title" xsi:type="string">Illustrations</argument>
+                    <argument name="sort_order" xsi:type="number">40</argument>
+                </arguments>
+            </block>
+            <block class="Magento\Catalog\Block\Product\View" name="reference" 
+                    template="Magento_Catalog::product/view/sections/reference.phtml" group="detailed_info" >
+                <arguments>
+                    <argument translate="true" name="title" xsi:type="string">Referencer</argument>
+                    <argument name="sort_order" xsi:type="number">50</argument>
+                </arguments>
+            </block>
+            <block class="Magento\Catalog\Block\Product\View" name="videos" 
+                    template="Magento_Catalog::product/view/sections/videos.phtml" group="detailed_info" >
+                <arguments>
+                    <argument translate="true" name="title" xsi:type="string">Video</argument>
+                    <argument name="sort_order" xsi:type="number">60</argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+        
+        <move element="page.main.title" destination="product.info" as="product.title" />
+        <referenceBlock name="product.info.stockstatus" remove="true"/>
+        <referenceBlock name="product.info.addtocompare" remove="true"/>
+        <!-- <referenceBlock name="related" remove="true" /> -->
+    </body>
+</page>
