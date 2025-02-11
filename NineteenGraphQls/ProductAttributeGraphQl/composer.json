@@ -1,0 +1,39 @@
+{
+    "name": "NineteenGraphQls/product-attribute-graphql",
+    "description": "NineteenGraphQls Product Attribute in Graph Ql for Magento 2.",
+    "type": "magento2-module",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "version": "1.0.0",
+    "license": [
+        "OSL-3.0"
+    ],
+    "authors": [
+      {
+        "name": "NineteenGraphQls",
+        "role": "Technical Support"
+      }
+    ],
+    "repositories": [
+      {
+          "type": "package",
+          "package": {
+              "name": "NineteenGraphQls/product-attribute-graphql",
+              "version": "1.0.0",
+              "source": {
+                  "url": "https://github.com/NineteenGraphQls/product-attribute-graphql.git",
+                  "type": "git",
+                  "reference": "main"
+              }
+          }
+      }
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "NineteenGraphQls\\ProductAttributeGraphQl\\": ""
+        }
+    }
+  }
